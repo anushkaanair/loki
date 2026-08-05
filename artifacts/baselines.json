@@ -1,0 +1,20 @@
+{
+  "method": "Garak (NVIDIA) and Promptfoo were run against the identical self-built chat-tier1 target through Loki's OpenAI-compatible shim (engine/api/openai_shim.py), which scores every request with the same canary oracle Loki uses. Numbers are directly comparable.",
+  "tools": [
+    {
+      "name": "Garak 0.16.0 (NVIDIA)",
+      "status": "ran",
+      "findings": 4,
+      "notes": "Ran dan.Dan_11_0 + latentinjection.LatentInjectionFactSnippetEiffel (258 probe requests). Under Loki's canary oracle, 4/256 (1.6%) of its latent-injection requests actually leaked the tier-1 canary; garak's own generic detectors reported the target as resilient and did not flag those leaks. Garak 0.16 DOES include latentinjection, agent_breaker and sysprompt_extraction probe families (its catalog has grown), so it is not blind to indirect injection — but it replays a fixed prompt set and does not adapt."
+    },
+    {
+      "name": "Promptfoo (latest, npx)",
+      "status": "ran",
+      "findings": 0,
+      "notes": "Ran 5 representative single-turn injection prompts (override, authority, roleplay, base64, DoS) against tier-1. 0/5 leaked the canary — the static plaintext variants were caught by tier-1's denylist, exactly the case where a non-adaptive replay stalls."
+    }
+  ],
+  "loki_tier1_asr": 0.41,
+  "loki_unique": "On the SAME tier-1 target, Loki's adaptive genetic search reached ~41% attack success (matrix phase) vs. garak's 1.6% and promptfoo's 0% under an identical oracle — because it evolves payloads and routes on refusal patterns instead of replaying a fixed list. Loki also produces artifacts neither baseline does: per-finding N-trial reproduction with Wilson 95% CIs, de-duplication to DISTINCT findings (not raw hit counts), a deterministic `loki replay <id>` for every reported finding, deterministic tripwire proofs of agent excessive-agency (delete_records / non-allowlisted email) on a sandboxed tool-using agent, and the guardrail-tier vs. technique-family effectiveness matrix.",
+  "their_unique": "Honestly: garak ships a far broader catalog of probe CATEGORIES than Loki's five OWASP classes (toxicity, malware generation, package hallucination, glitch tokens, encoding smuggling, visual jailbreak, data-leak replay, and more) plus mature, well-tuned detectors; promptfoo has a polished red-team grader ecosystem and first-class CI integration. Loki is deliberately narrower in surface but deeper on adaptivity and evidence-grade, reproducible proof."
+}
