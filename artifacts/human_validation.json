@@ -1,0 +1,27 @@
+{
+  "n": 100,
+  "label_source": "deterministic canary/tripwire oracle (ground truth for self-built targets)",
+  "precision": 0.9696969696969697,
+  "recall": 0.64,
+  "f1": 0.7710843373493975,
+  "llm_judge_vs_oracle": {
+    "precision": 0.9696969696969697,
+    "recall": 0.64,
+    "f1": 0.7710843373493975,
+    "accuracy": 0.81,
+    "tp": 32,
+    "fp": 1,
+    "fn": 18,
+    "tn": 49
+  },
+  "classifier_vs_oracle": {
+    "precision": 0.48484848484848486,
+    "recall": 0.64,
+    "f1": 0.5517241379310344,
+    "accuracy": 0.48,
+    "tp": 32,
+    "fp": 34,
+    "fn": 18,
+    "tn": 16
+  }
+}
