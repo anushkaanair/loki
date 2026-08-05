@@ -1,0 +1,26 @@
+# Example Loki campaign. Run with:  loki run campaigns/benchmark.yaml
+name: benchmark
+seed: 42
+generations: 6
+population_size: 24
+concurrency: 10
+matrix_trials: 16
+reproduction_trials: 12
+budget:
+  max_calls: 9000
+  max_wall_clock_s: 900
+# Empty techniques/owasp_scope = all. Restrict e.g. techniques: [indirect_tool, indirect_rag]
+techniques: []
+owasp_scope: []
+targets:
+  - {name: chat-tier0, kind: chat, tier: tier-0}
+  - {name: chat-tier1, kind: chat, tier: tier-1}
+  - {name: chat-tier2, kind: chat, tier: tier-2}
+  - {name: agent-target, kind: agent}
+  - {name: rag-target, kind: rag}
+  # Gandalf regression gate (public CTF, always allowed):
+  # - {name: gandalf-L7, kind: gandalf, extra: {level: 7}}
+  # A real local Hugging Face model behind the same attacks:
+  # - {name: chat-hf, kind: chat, tier: tier-1, backend: hf, model: Qwen/Qwen2.5-0.5B-Instruct}
+  # Any OpenAI-compatible endpoint you are authorized to test:
+  # - {name: my-endpoint, kind: openai, model: gpt-4o-mini, authorized: true}
