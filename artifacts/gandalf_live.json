@@ -1,0 +1,15 @@
+{
+  "status": "BLOCKED — live Gandalf API retired by vendor",
+  "attempted_at": "2026-08-06",
+  "what_we_found": [
+    "The classic REST API gandalf.lakera.ai/api/send-message now returns HTTP 308 permanent-redirect to https://play.lakera.ai/agent-breaker (Lakera replaced the classic challenge).",
+    "The Gandalf game still exists at https://play.lakera.ai/gandalf but is now a Vite SPA whose backend is Convex (ConvexHttpClient; functions messages:sendMessage, messages:getMessagesForLevel).",
+    "Convex query/mutation calls to the deployment (flippant-beagle-955.convex.cloud) return opaque 'Server Error' without a session; the reactive protocol requires session/auth state and level document IDs that are not documented.",
+    "Driving it would require reverse-engineering an undocumented auth/session flow against a live third-party service with repeated guessing requests."
+  ],
+  "why_stopped": "This project's rules of engagement require respecting a target's terms and rate limits, and explicitly forbid evading throttling. Reverse-engineering an undocumented reactive auth flow by brute-forcing request shapes against a live third-party endpoint would violate that rule, so we stop, do not evade, and report honestly.",
+  "adapter_status": "The LiveGandalf REST adapter (engine/targets/gandalf.py) is implemented with conservative backoff and would work against the classic API; it cannot be validated because that API no longer exists.",
+  "substitute_evidence": "The adaptive genetic engine (NOT the scripted ladder) was run against the deterministic LocalGandalf 7-level reproduction; see artifacts/gandalf_adaptive_local.json. This is a LOCAL reproduction, reported under Part B (simulator harness), never presented as a live result.",
+  "live_levels_cleared": 0,
+  "live_total_attempts": 0
+}
