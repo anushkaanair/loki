@@ -1,0 +1,21 @@
+# Phase-2 real-model benchmark. A genuine local LLM (Qwen2.5-0.5B-Instruct) with
+# real safety tuning, behind the same guardrail stack. Run:
+#   loki run campaigns/real_hf.yaml --db artifacts/loki_real.db
+name: real-hf
+seed: 42
+generations: 3
+population_size: 12
+concurrency: 2            # HF is GPU-bound on MPS; low concurrency avoids contention
+matrix_trials: 6
+reproduction_trials: 6    # greedy decoding is deterministic → N/N or 0/N
+budget:
+  max_calls: 4000
+  max_wall_clock_s: 2400
+techniques: []
+owasp_scope: []
+targets:
+  - {name: chat-tier0, kind: chat, tier: tier-0, backend: hf, model: Qwen/Qwen2.5-0.5B-Instruct}
+  - {name: chat-tier1, kind: chat, tier: tier-1, backend: hf, model: Qwen/Qwen2.5-0.5B-Instruct}
+  - {name: chat-tier2, kind: chat, tier: tier-2, backend: hf, model: Qwen/Qwen2.5-0.5B-Instruct}
+  - {name: agent-target, kind: agent, backend: hf, model: Qwen/Qwen2.5-0.5B-Instruct}
+  - {name: rag-target, kind: rag, backend: hf, model: Qwen/Qwen2.5-0.5B-Instruct}
