@@ -1,0 +1,7 @@
+{
+  "step": "P5 — close the HackAPrompt gap",
+  "status": "BLOCKED — no Hugging Face credentials in this session",
+  "detail": "HackAPrompt 1.0 (hackaprompt/hackaprompt-dataset) is a gated Hub dataset requiring an authenticated HF account to accept its terms. No HF_TOKEN / huggingface token is present in this environment (checked env vars and ~/.cache/huggingface/token), and this non-interactive session cannot run the browser OAuth/accept-terms flow or create credentials.",
+  "action_taken": "Left the public ungated substitute (jayavibhav/prompt-injection) in place, exactly as disclosed in the report. Held-out F1 remains ~0.98. The honest disclosure was not removed.",
+  "to_unblock": "Set HF_TOKEN for an account that has accepted the HackAPrompt dataset terms, then run: python -m engine.judge.train_classifier --max-samples 24000 --epochs 1 (it tries HackAPrompt first). Report will then show both variants side by side."
+}
