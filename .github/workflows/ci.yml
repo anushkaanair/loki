@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python 3.11
+        run: uv venv --python 3.11 .venv
+
+      # The core engine, the full test suite, and the deterministic simulator all
+      # run without torch/transformers. The real-model backends are exercised
+      # separately (they need a multi-GB model download), so CI installs the
+      # lighter set and stays fast.
+      - name: Install dependencies
+        run: uv pip install --python .venv/bin/python -e '.[dev]'
+
+      - name: Run test suite
+        env:
+          TOKENIZERS_PARALLELISM: "false"
+        run: .venv/bin/python -m pytest -q
+
+      - name: Smoke-test the CLI end to end
+        run: |
+          .venv/bin/python -m cli.main targets list
+          .venv/bin/python -m cli.main run --quick --db /tmp/ci.db
+          .venv/bin/python -m cli.main report --db /tmp/ci.db --out /tmp/ci-report
+          test -f /tmp/ci-report.html
