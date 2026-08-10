@@ -1,0 +1,28 @@
+# Environments / deps
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+
+# Build output
+dashboard/dist/
+
+# Logs
+*.log
+dashboard/*.log
+
+# Run databases (regenerable; large). Evidence JSON/JSONL below IS committed.
+artifacts/*.db
+artifacts/*.db-journal
+
+# Trained classifier weights (regenerable via engine/judge/train_classifier.py)
+artifacts/classifier/
+
+artifacts/PDF_SKIPPED.txt
+.DS_Store
+
+# Internal planning/build briefs — kept locally, not part of the published project.
+# Remove these lines if you want them in the public repo.
+BUILD_BRIEF.md
+BUILD_BRIEF_v1_archive.md
+REAL_TARGET_BRIEF.md
