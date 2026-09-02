@@ -1,0 +1,19 @@
+# Render Blueprint — deploys the live Loki dashboard.
+#
+# The dashboard's "launch campaign" flow runs the deterministic simulator
+# backend only (real guardrail code, real tripwires, no GPU/model download),
+# so this fits comfortably on Render's free tier.
+#
+# Storage is intentionally ephemeral: the free plan has no persistent disk,
+# and a demo that always starts empty and fills up as you watch is a truer
+# proof the engine runs live than one seeded with a canned dataset. A visitor
+# clicks "launch campaign" and sees it happen in real time.
+#
+# Deploy: on render.com, New -> Blueprint -> connect this repo -> Apply.
+services:
+  - type: web
+    name: loki-dashboard
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/latest

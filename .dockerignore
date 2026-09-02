@@ -1,0 +1,13 @@
+.venv
+__pycache__
+*.pyc
+node_modules
+dashboard/dist
+artifacts
+tests
+docs
+baselines
+*.db
+*.db-journal
+.git
+.github

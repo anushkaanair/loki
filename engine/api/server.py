@@ -114,16 +114,29 @@ async def ws(websocket: WebSocket):
         hub.clients.discard(websocket)
 
 
+def _clamp(v, lo, hi, default):
+    try:
+        return max(lo, min(hi, int(v)))
+    except (TypeError, ValueError):
+        return default
+
+
 async def _run_campaign(params: dict):
     hub.running = True
     loop = asyncio.get_event_loop()
+    # Clamp every client-supplied knob server-side. This endpoint is reachable
+    # by anyone with the page open, so a visitor's inputs are untrusted input,
+    # not configuration — bounds keep a public demo instance from being
+    # driven into CPU/memory exhaustion by a large or malicious request.
     cfg = CampaignConfig(
-        name=params.get("name", "live"), seed=int(params.get("seed", 42)),
-        generations=int(params.get("generations", 5)),
-        population_size=int(params.get("population_size", 20)),
-        concurrency=int(params.get("concurrency", 8)),
-        matrix_trials=int(params.get("matrix_trials", 10)),
-        budget=Budget(max_calls=int(params.get("max_calls", 4000)), max_wall_clock_s=600),
+        name=params.get("name", "live")[:40] if isinstance(params.get("name"), str) else "live",
+        seed=_clamp(params.get("seed"), 0, 2**31 - 1, 42),
+        generations=_clamp(params.get("generations"), 1, 8, 5),
+        population_size=_clamp(params.get("population_size"), 4, 32, 20),
+        concurrency=_clamp(params.get("concurrency"), 1, 8, 8),
+        matrix_trials=_clamp(params.get("matrix_trials"), 1, 16, 10),
+        budget=Budget(max_calls=_clamp(params.get("max_calls"), 50, 3000, 1500),
+                      max_wall_clock_s=180),
         targets=default_self_built_targets(),
     )
     s = store()
@@ -167,7 +180,12 @@ if _DIST.exists():
 
 def main():
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8008)
+    # 0.0.0.0 + $PORT so this binds correctly behind a PaaS load balancer
+    # (Render, Railway, Fly.io all inject PORT); falls back to the local
+    # dev defaults when run directly.
+    host = os.environ.get("HOST", "0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
+    port = int(os.environ.get("PORT", 8008))
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":
