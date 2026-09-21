@@ -107,14 +107,14 @@ correctly. They are **not** claims about a real model.
 | agent-target (sandboxed tools) | **39%** | — |
 | rag-target (poisonable corpus) | **47%** | — |
 
-- **68 distinct findings**, 24 CONFIRMED (reproduce ≥ 8/12 on a fresh target),
-  spanning all five in-scope OWASP-LLM categories (LLM01/02/04/06/08).
+- **84 distinct findings**, 34 CONFIRMED (reproduce ≥ 8/12 on a fresh target) and
+  50 INTERMITTENT, spanning all five in-scope OWASP-LLM categories (LLM01/02/04/06/08).
 - **Headline:** hardening the chat stack from tier-0 → tier-2 cut attack success
   from 51% to 7%. The tier-2 residual is dominated by **DoS (LLM04)** and
   **instruction-following hijack (LLM01)** — which output filtering does not stop.
 - **Agent excessive-agency** findings carry deterministic tripwire proofs
   (`delete_records called with query='*'`, non-allowlisted `send_email`).
-- **Own-app validation:** Loki found 12 evidence-verified findings in a faithful
+- **Own-app validation:** Loki found 12 findings (4 CONFIRMED, 8 INTERMITTENT) in a faithful
   replica of the operator's real **ResumeIntel** interview-agent prompt, which
   concatenates untrusted resume/JD/RAG text with no isolation or output filtering.
 
@@ -245,7 +245,7 @@ the baselines do that Loki doesn't).
 .venv/bin/python -m pytest -q
 ```
 
-42 tests (31 core + 11 Phase-2/3): mutation/crossover/fitness/diversity, refusal classification, Wilson CI,
+47 tests: mutation/crossover/fitness/diversity, refusal classification, Wilson CI,
 dedupe, every adapter, tripwires (both directions), the authorization gate, the
 full pipeline integration, **5-finding replay → PASS**, CLI end-to-end (subprocess), budget enforcement, backend parity (sim/hf/openai), live-target backoff + attempt ceiling, and Loki's own security surface (replay path-traversal, safe JSON deserialization, sandboxed calculator), determinism (same seed ⟹
 same sequence), report reconciliation, and the Gandalf 7-level regression gate.
