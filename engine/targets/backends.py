@@ -404,10 +404,10 @@ class HFBackend(Backend):
     def version(self) -> str:
         try:
             import transformers
-            mode = f"@sampled-T{self.temperature:g}" if self.temperature > 0 else ""
-            return f"{self.name}@transformers-{transformers.__version__}{mode}"
+            base = f"{self.name}@transformers-{transformers.__version__}"
         except Exception:
-            return self.name
+            base = self.name  # transformers absent (e.g. CI) — still label the decoding mode
+        return base + (f"@sampled-T{self.temperature:g}" if self.temperature > 0 else "")
 
 
 class OpenAIBackend(Backend):
