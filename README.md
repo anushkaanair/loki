@@ -48,13 +48,15 @@ sampled-decoding run that can produce INTERMITTENT and FLAKE on a real model.
 Each report now also prints the attempts → candidates → CONFIRMED / INTERMITTENT
 / FLAKE funnel (campaigns stored before it was recorded show "not recorded"):
 
-| Target | Real-model ASR | 95% CI |
-| ------ | -------------- | ------ |
-| chat-tier0 (no defenses) | **18%** | [0.07, 0.39] |
-| chat-tier1 (denylist + instruction) | **0%** | [0.00, 0.15] |
-| chat-tier2 (classifier + isolation + filter) | **0%** | [0.00, 0.15] |
-| agent-target (sandboxed tools) | **36%** | [0.20, 0.57] |
-| rag-target (poisonable corpus) | **64%** | [0.43, 0.80] |
+| Target | Real-model ASR | Successes / attempts | 95% CI |
+| ------ | -------------- | -------------------- | ------ |
+| chat-tier0 (no defenses) | **18%** | 4/22 | [0.07, 0.39] |
+| chat-tier1 (denylist + instruction) | **0%** | 0/22 | [0.00, 0.15] |
+| chat-tier2 (classifier + isolation + filter) | **0%** | 0/22 | [0.00, 0.15] |
+| agent-target (sandboxed tools) | **36%** | 8/22 | [0.20, 0.57] |
+| rag-target (poisonable corpus) | **64%** | 14/22 | [0.43, 0.80] |
+
+Each real-model rate rests on only 22 attempts per target (11 technique families × 2 trials), which is why the intervals are wide: the 64% is 14/22, and its CI runs from 0.43 to 0.80. The simulator table below has 176 attempts per target.
 
 **This is the project's central thesis, confirmed on a real model:** the guardrail
 tiers *completely* shut down the direct user channel (tier-1 and tier-2 both 0%),
@@ -106,13 +108,13 @@ These come from `deterministic-sim-v1` (real guardrail code + tripwires around a
 seeded model simulator) and validate that the **evidence pipeline itself** behaves
 correctly. They are **not** claims about a real model.
 
-| Target | Attack success rate | 95% CI |
-| ------ | ------------------- | ------ |
-| chat-tier0 (no defenses) | **51%** | [0.44, 0.58] |
-| chat-tier1 (denylist + instruction) | **43%** | [0.36, 0.50] |
-| chat-tier2 (classifier + isolation + output filter) | **7%** | [0.03, 0.13] |
-| agent-target (sandboxed tools) | **39%** | — |
-| rag-target (poisonable corpus) | **47%** | — |
+| Target | Attack success rate | Successes / attempts | 95% CI |
+| ------ | ------------------- | -------------------- | ------ |
+| chat-tier0 (no defenses) | **51%** | 90/176 | [0.44, 0.58] |
+| chat-tier1 (denylist + instruction) | **43%** | 75/176 | [0.36, 0.50] |
+| chat-tier2 (classifier + isolation + output filter) | **7%** | 12/176 | [0.04, 0.12] |
+| agent-target (sandboxed tools) | **39%** | 68/176 | [0.32, 0.46] |
+| rag-target (poisonable corpus) | **47%** | 83/176 | [0.40, 0.55] |
 
 - **84 distinct findings**, 34 CONFIRMED (reproduce ≥ 8/12 on a fresh target) and
   50 INTERMITTENT, spanning all five in-scope OWASP-LLM categories (LLM01/02/04/06/08).
