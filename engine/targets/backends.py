@@ -320,6 +320,14 @@ def _refusal(low: str, roll: float) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _stable_seed(salt: str) -> int:
+    """Process-independent seed from a salt. ``hash(str)`` is randomized per
+    interpreter run, so it cannot back a replay that must reproduce in a new
+    process."""
+    import hashlib
+    return int.from_bytes(hashlib.sha256(salt.encode()).digest()[:4], "big") % (2**31)
+
+
 class HFBackend(Backend):
     """A genuine local Hugging Face instruct model.
 
@@ -331,7 +339,13 @@ class HFBackend(Backend):
 
     _cache: dict[str, Any] = {}
 
-    def __init__(self, model: str = "Qwen/Qwen2.5-0.5B-Instruct"):
+    def __init__(self, model: str = "Qwen/Qwen2.5-0.5B-Instruct",
+                 temperature: float = 0.0, top_p: float = 0.95):
+        # temperature == 0 -> greedy (deterministic: N-trial reproduction then
+        # measures determinism, not robustness). temperature > 0 -> seeded
+        # sampling, where each trial's salt gives an independent draw.
+        self.temperature = float(temperature)
+        self.top_p = float(top_p)
         self.model = model
         self.name = f"hf:{model}"
 
@@ -367,11 +381,14 @@ class HFBackend(Backend):
         except Exception:
             prompt = "\n".join(f"{m['role']}: {m['content']}" for m in chat) + "\nassistant:"
         inputs = tok(prompt, return_tensors="pt", truncation=True, max_length=4096).to(device)
-        # Deterministic decoding so replay is exact.
-        torch.manual_seed(abs(hash(seed_salt)) % (2**31))
+        # Greedy by default (replay is exact); with temperature > 0 the draw is
+        # seeded from the salt, so replay of a stored salt is still repeatable.
+        torch.manual_seed(_stable_seed(seed_salt))
+        gen_kw = ({"do_sample": True, "temperature": self.temperature, "top_p": self.top_p}
+                  if self.temperature > 0 else {"do_sample": False})
         with torch.no_grad():
-            out = model.generate(**inputs, max_new_tokens=max_tokens, do_sample=False,
-                                 pad_token_id=tok.eos_token_id)
+            out = model.generate(**inputs, max_new_tokens=max_tokens,
+                                 pad_token_id=tok.eos_token_id, **gen_kw)
         n_prompt = inputs["input_ids"].shape[1]
         new_tokens = int(out.shape[1] - n_prompt)
         text = tok.decode(out[0][n_prompt:], skip_special_tokens=True)
@@ -387,7 +404,8 @@ class HFBackend(Backend):
     def version(self) -> str:
         try:
             import transformers
-            return f"{self.name}@transformers-{transformers.__version__}"
+            mode = f"@sampled-T{self.temperature:g}" if self.temperature > 0 else ""
+            return f"{self.name}@transformers-{transformers.__version__}{mode}"
         except Exception:
             return self.name
 
@@ -395,12 +413,14 @@ class HFBackend(Backend):
 class OpenAIBackend(Backend):
     """Any OpenAI-compatible chat-completions endpoint (model-agnostic)."""
 
-    def __init__(self, model: str, base_url: str | None = None, api_key: str | None = None):
+    def __init__(self, model: str, base_url: str | None = None, api_key: str | None = None,
+                 temperature: float = 0.0):
         import os
 
         self.model = model
         self.base_url = base_url or os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
+        self.temperature = float(temperature)
         self.name = f"openai:{model}"
 
     async def generate(self, messages: list[Message], *, tools: list[str] | None = None,
@@ -412,8 +432,8 @@ class OpenAIBackend(Backend):
             "model": self.model,
             "messages": [m.as_dict() for m in messages],
             "max_tokens": max_tokens,
-            "temperature": 0,
-            "seed": abs(hash(seed_salt)) % (2**31),
+            "temperature": self.temperature,
+            "seed": _stable_seed(seed_salt),
         }
         headers = {"Authorization": f"Bearer {self.api_key}"}
         try:
@@ -454,9 +474,12 @@ def make_backend(kind: str, model: str | None = None, **kw) -> Backend:
     if kind == "deterministic":
         return DeterministicBackend()
     if kind == "hf":
-        return HFBackend(model or "Qwen/Qwen2.5-0.5B-Instruct")
+        return HFBackend(model or "Qwen/Qwen2.5-0.5B-Instruct",
+                         temperature=float(kw.get("temperature", 0.0)),
+                         top_p=float(kw.get("top_p", 0.95)))
     if kind == "openai":
         if not model:
             raise ValueError("openai backend requires a model id")
-        return OpenAIBackend(model, **kw)
+        allowed = {k: kw[k] for k in ("base_url", "api_key", "temperature") if k in kw}
+        return OpenAIBackend(model, **allowed)
     raise ValueError(f"unknown backend kind: {kind}")

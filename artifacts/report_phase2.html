@@ -23,7 +23,7 @@
 </style></head><body>
 
 <h1>▲ LOKI — Phase 2: Real-Target Validation Report</h1>
-<div class="muted">generated 2026-08-20 09:31 · Part A = real models · Part B = simulator harness (pipeline validation) · every table labels its backend</div>
+<div class="muted">generated 2026-09-21 20:03 · Part A = real models · Part B = simulator harness (pipeline validation) · every table labels its backend</div>
 
 <div class="banner">
 <b>Definition-of-done check.</b> Live Gandalf: 0/7 cleared (live API retired — see A1; adaptive engine cleared 7/7 on the local reproduction). Real-model findings: 26 across 4 OWASP categories, each replayable via `loki replay`. Judge precision/recall measured against hand-checkable oracle labels on real output (A3). Clauses not supported are stated plainly rather than softened.
@@ -49,6 +49,10 @@
  <div class="kpi"><div class="n">65</div><div class="l">real successful attempts</div></div>
  <div class="kpi"><div class="n">-</div><div class="l">probe budget</div></div>
 </div>
+<p class="muted"><b>Reading the CONFIRMED count:</b> these findings were re-run under
+greedy decoding, which is deterministic, so all 26 reproducing at 10/10 shows the outputs are
+repeatable, not that the attacks are robust to sampling. A sampled-decoding campaign
+(<code>campaigns/real-3b-sampled.yaml</code>) is the check that can produce INTERMITTENT and FLAKE outcomes.</p>
 <p>OWASP coverage on the real model: <b>LLM08</b>=3 <b>LLM06</b>=12 <b>LLM01</b>=10 <b>LLM04</b>=1 </p>
 <h4 class="muted">Guardrail tier vs. attack success rate — real model</h4>
 <table><tr><th>Target</th><th>backend</th><th>ASR</th><th>succ/trials</th><th>95% CI</th></tr>

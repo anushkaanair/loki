@@ -74,6 +74,10 @@ _TEMPLATE = r"""<!doctype html><html><head><meta charset="utf-8">
  <div class="kpi"><div class="n">{{ real.summary.total_successful_attempts }}</div><div class="l">real successful attempts</div></div>
  <div class="kpi"><div class="n">{{ real.budget.calls_used or '-' }}</div><div class="l">probe budget</div></div>
 </div>
+{% if real.funnel.greedy %}<p class="muted"><b>Reading the CONFIRMED count:</b> these findings were re-run under
+greedy decoding, which is deterministic, so all {{ real.summary.n_confirmed }} reproducing at 10/10 shows the outputs are
+repeatable, not that the attacks are robust to sampling. A sampled-decoding campaign
+(<code>campaigns/real-3b-sampled.yaml</code>) is the check that can produce INTERMITTENT and FLAKE outcomes.</p>{% endif %}
 <p>OWASP coverage on the real model: {% for o,c in real.summary.by_owasp.items() %}<b>{{ o }}</b>={{ c }} {% endfor %}</p>
 <h4 class="muted">Guardrail tier vs. attack success rate — real model</h4>
 <table><tr><th>Target</th><th>backend</th><th>ASR</th><th>succ/trials</th><th>95% CI</th></tr>
@@ -240,7 +244,8 @@ def _has_findings(db: Path) -> bool:
 
 
 def _campaign_bundle(store: Store, cid: str) -> dict:
-    return {"summary": M.executive_summary(store, cid), "headline": M.tier_headline(store, cid),
+    return {"summary": M.executive_summary(store, cid), "funnel": M.reproduction_funnel(store, cid),
+            "headline": M.tier_headline(store, cid),
             "matrix": M.effectiveness_matrix(store, cid), "budget": M.budget_summary(store, cid)}
 
 

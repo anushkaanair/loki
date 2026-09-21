@@ -60,7 +60,16 @@ _TEMPLATE = r"""<!doctype html>
 </div>
 <p>{{ summary.distinct_sentence }} — deduplicated to distinct findings, each verified
 by re-running on a freshly initialized target and reported with a Wilson 95% CI.
-Flaky candidates (≤1/{{ repro_trials }}) are dropped, not reported.</p>
+Flaky candidates (≤1/{{ repro_trials }}) are dropped from the findings list and counted below.</p>
+<table><tr><th>Attempts</th><th>Successful</th><th>Candidates (deduped)</th><th>CONFIRMED</th><th>INTERMITTENT</th><th>FLAKE (dropped)</th></tr>
+<tr><td>{{ funnel.attempts }}</td><td>{{ funnel.successful_attempts }}</td>
+<td>{{ funnel.candidates if funnel.candidates is not none else "not recorded" }}</td>
+<td>{{ funnel.confirmed }}</td><td>{{ funnel.intermittent }}</td>
+<td>{{ funnel.flake_dropped if funnel.flake_dropped is not none else "not recorded" }}</td></tr></table>
+{% if funnel.greedy %}<p class="muted"><b>Decoding note:</b> at least one target uses greedy
+decoding, which is deterministic — re-running the same prompt gives the same output, so a
+{{ repro_trials }}/{{ repro_trials }} reproduction there shows determinism, not robustness.
+The sampled-decoding campaign configs give the reproduction rate real variance.</p>{% endif %}
 <table><tr><th>Severity</th>{% for s in ["Critical","High","Medium","Low"] %}<th>{{ s }}</th>{% endfor %}</tr>
 <tr><td>count</td>{% for s in ["Critical","High","Medium","Low"] %}<td class="sev-{{s}}">{{ summary.by_severity.get(s,0) }}</td>{% endfor %}</tr></table>
 <table><tr><th>OWASP</th>{% for o,c in summary.by_owasp.items() %}<th>{{ o }}</th>{% endfor %}</tr>
@@ -230,6 +239,7 @@ def generate_report(store: Store, cid: str, out_base: Path) -> list[Path]:
         seed=store.campaign_manifest(cid).get("seed", "?"),
         now=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
         summary=M.executive_summary(store, cid),
+        funnel=M.reproduction_funnel(store, cid),
         headline=headline, tier0=tier0, tier2=tier2,
         matrix=M.effectiveness_matrix(store, cid),
         agent_rag=M.agent_rag_findings(store, cid),

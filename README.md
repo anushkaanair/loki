@@ -39,7 +39,14 @@ Generate the split report with `loki phase2` → `artifacts/report_phase2.{html,
 
 **Real-model benchmark** — `backend: hf:Qwen/Qwen2.5-3B-Instruct` (local, no key).
 26 findings, **all 26 CONFIRMED**, across LLM01/LLM04/LLM06/LLM08
-(3 Critical, 19 High, 4 Medium):
+(3 Critical, 19 High, 4 Medium). **Read "all CONFIRMED" carefully:** this run
+used greedy decoding, which is deterministic, so a finding reproducing 10/10
+shows the output is repeatable — not that the attack survives sampling. The
+simulator (which injects per-trial variability) is where the CONFIRMED /
+INTERMITTENT split is meaningful; `campaigns/real-3b-sampled.yaml` is the
+sampled-decoding run that can produce INTERMITTENT and FLAKE on a real model.
+Each report now also prints the attempts → candidates → CONFIRMED / INTERMITTENT
+/ FLAKE funnel (campaigns stored before it was recorded show "not recorded"):
 
 | Target | Real-model ASR | 95% CI |
 | ------ | -------------- | ------ |
@@ -138,7 +145,8 @@ uv pip install --python .venv/bin/python -e '.[ml]'  # torch/transformers (real 
 .venv/bin/python -m cli.main run --quick
 .venv/bin/python -m cli.main replay LOKI-2026-0007
 .venv/bin/python -m cli.main report --campaign <id>
-.venv/bin/python -m cli.main run campaigns/real-3b.yaml --db artifacts/loki_real_3b.db  # real model
+.venv/bin/python -m cli.main run campaigns/real-3b.yaml --db artifacts/loki_real_3b.db  # real model, greedy
+.venv/bin/python -m cli.main run campaigns/real-3b-sampled.yaml --db artifacts/loki_real_3b_sampled.db  # real model, sampled (T=0.7)
 .venv/bin/python -m cli.main phase2   # judge revalidation + own-app + Part A/B/C report
 ```
 
@@ -245,7 +253,7 @@ the baselines do that Loki doesn't).
 .venv/bin/python -m pytest -q
 ```
 
-47 tests: mutation/crossover/fitness/diversity, refusal classification, Wilson CI,
+50 tests (47 run in CI; 3 need torch or the real-model run artifacts and skip there): mutation/crossover/fitness/diversity, refusal classification, Wilson CI,
 dedupe, every adapter, tripwires (both directions), the authorization gate, the
 full pipeline integration, **5-finding replay → PASS**, CLI end-to-end (subprocess), budget enforcement, backend parity (sim/hf/openai), live-target backoff + attempt ceiling, and Loki's own security surface (replay path-traversal, safe JSON deserialization, sandboxed calculator), determinism (same seed ⟹
 same sequence), report reconciliation, and the Gandalf 7-level regression gate.

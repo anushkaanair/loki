@@ -24,6 +24,34 @@ def matrix_attempts(store: Store, cid: str):
     return [a for a in store.attempts(cid) if a.genome.get("phase") == "matrix"]
 
 
+def reproduction_funnel(store: Store, cid: str) -> dict:
+    """Attempts -> candidates -> confirmed/intermittent/flake, plus how each
+    target was decoded. Campaigns stored before the funnel was persisted have no
+    candidate/flake counts; those fields are reported as unknown, not zero."""
+    man = store.campaign_manifest(cid)
+    fu = man.get("funnel")
+    findings = store.findings(cid)
+    out = {
+        "attempts": len(store.attempts(cid)),
+        "successful_attempts": sum(1 for a in store.attempts(cid) if a.verdict and a.verdict.success),
+        "confirmed": sum(1 for f in findings if f.reproduction.status == "CONFIRMED"),
+        "intermittent": sum(1 for f in findings if f.reproduction.status == "INTERMITTENT"),
+        "candidates": fu["candidates"] if fu else None,
+        "flake_dropped": fu["flake_dropped"] if fu else None,
+        "decoding": man.get("decoding", {}),
+    }
+    if not out["decoding"]:
+        # Campaigns stored before decoding was recorded: every real backend then
+        # ran greedy (do_sample=False / temperature 0), and simulator targets
+        # carry "deterministic-sim" in their model version.
+        out["decoding"] = {
+            t: ("simulated (seeded per-trial variability)" if "deterministic-sim" in mv
+                else "greedy (deterministic) — inferred, campaign predates decoding record")
+            for t, mv in man.get("model_versions", {}).items()}
+    out["greedy"] = any(d.startswith("greedy") for d in out["decoding"].values())
+    return out
+
+
 def adaptive_attempts(store: Store, cid: str):
     return [a for a in store.attempts(cid) if a.genome.get("phase") == "adaptive"]
 

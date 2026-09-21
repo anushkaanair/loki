@@ -88,6 +88,13 @@ class Store:
         self.conn.execute("UPDATE campaigns SET finished_at=? WHERE id=?", (time.time(), cid))
         self.conn.commit()
 
+    def update_manifest(self, cid: str, **fields) -> None:
+        """Merge extra fields (e.g. the evidence funnel) into a campaign manifest."""
+        m = self.campaign_manifest(cid)
+        m.update(fields)
+        self.conn.execute("UPDATE campaigns SET manifest=? WHERE id=?", (json.dumps(m), cid))
+        self.conn.commit()
+
     def latest_campaign(self) -> str | None:
         row = self.conn.execute(
             "SELECT id FROM campaigns ORDER BY started_at DESC LIMIT 1").fetchone()

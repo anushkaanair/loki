@@ -78,6 +78,8 @@ class EvidenceEngine:
         self.campaign_id = campaign_id
         self.trials = trials
         self._counter = 0
+        self.dropped_flakes: list[dict] = []
+        self.funnel: dict = {}
 
     def _next_id(self) -> str:
         self._counter += 1
@@ -112,7 +114,13 @@ class EvidenceEngine:
         else:
             status = "INTERMITTENT"
         if status == "FLAKE":
-            return None  # dropped, not reported
+            # Dropped from the findings list, but counted: a funnel that hides
+            # its own attrition overstates how reliable the survivors are.
+            self.dropped_flakes.append({
+                "target": rep.target, "technique": rep.technique_family,
+                "owasp": rep.verdict.owasp_category.value,
+                "successes": successes, "trials": self.trials})
+            return None  # not reported as a finding
 
         # Ensure the stored replay salt actually reproduces on a fresh target.
         replay_salt = first_success_salt or rep.genome.get("seed_salt")
@@ -163,6 +171,18 @@ class EvidenceEngine:
             f = await self.verify(rep, count)
             if f is not None:
                 findings.append(f)
+        by_status = {"CONFIRMED": 0, "INTERMITTENT": 0}
+        for f in findings:
+            by_status[f.reproduction.status] += 1
+        self.funnel = {
+            "successful_attempts": len(successes),
+            "candidates": len(reps),  # distinct clusters after dedupe
+            "confirmed": by_status["CONFIRMED"],
+            "intermittent": by_status["INTERMITTENT"],
+            "flake_dropped": len(self.dropped_flakes),
+            "flakes": self.dropped_flakes,
+            "trials_per_candidate": self.trials,
+        }
         # Sort most severe first, then by reproduction rate.
         findings.sort(key=lambda f: (f.severity.rank, f.reproduction.rate), reverse=True)
         return findings

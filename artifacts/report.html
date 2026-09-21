@@ -33,7 +33,7 @@
 </style></head><body>
 <header>
   <h1>▲ LOKI — Adaptive AI Red-Teaming Benchmark Report</h1>
-  <div class="sub">campaign <code>benchmark-b65213</code> · seed 42 · generated 2026-08-20 09:31</div>
+  <div class="sub">campaign <code>benchmark-b65213</code> · seed 42 · generated 2026-09-21 20:03</div>
 </header>
 
 <h2>1 · Executive summary</h2>
@@ -45,7 +45,13 @@
 </div>
 <p>84 distinct findings across 661 successful attempts — deduplicated to distinct findings, each verified
 by re-running on a freshly initialized target and reported with a Wilson 95% CI.
-Flaky candidates (≤1/12) are dropped, not reported.</p>
+Flaky candidates (≤1/12) are dropped from the findings list and counted below.</p>
+<table><tr><th>Attempts</th><th>Successful</th><th>Candidates (deduped)</th><th>CONFIRMED</th><th>INTERMITTENT</th><th>FLAKE (dropped)</th></tr>
+<tr><td>1618</td><td>661</td>
+<td>not recorded</td>
+<td>34</td><td>50</td>
+<td>not recorded</td></tr></table>
+
 <table><tr><th>Severity</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th></tr>
 <tr><td>count</td><td class="sev-Critical">7</td><td class="sev-High">57</td><td class="sev-Medium">20</td><td class="sev-Low">0</td></tr></table>
 <table><tr><th>OWASP</th><th>LLM08</th><th>LLM01</th><th>LLM06</th><th>LLM02</th><th>LLM04</th></tr>

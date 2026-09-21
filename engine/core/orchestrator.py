@@ -163,6 +163,14 @@ class Orchestrator:
         evidence = EvidenceEngine(self.judge, self.target_factory, self.cfg.seed,
                                   self.campaign_id, trials=self.cfg.reproduction_trials)
         findings = await evidence.build_findings(all_successes, on_progress=self.on_progress)
+        decoding = {}
+        for tc in self.cfg.targets:
+            if tc.backend == "deterministic":
+                decoding[tc.name] = "simulated (seeded per-trial variability)"
+            else:
+                t = float(tc.extra.get("temperature", 0.0))
+                decoding[tc.name] = f"sampled (T={t:g})" if t > 0 else "greedy (deterministic)"
+        self.store.update_manifest(self.campaign_id, funnel=evidence.funnel, decoding=decoding)
         for f in findings:
             self.store.record_finding(f, self.campaign_id)
         self._record_judge_labels(all_successes)

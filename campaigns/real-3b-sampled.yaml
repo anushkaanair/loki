@@ -1,0 +1,31 @@
+# Real-model campaign with SAMPLED decoding (temperature 0.7, top_p 0.95).
+# The greedy real-3b campaign re-runs one deterministic output N times, so its
+# N/N reproduction shows determinism only. Here each reproduction trial draws
+# independently (seeded from its salt), so INTERMITTENT and FLAKE can occur.
+#   loki run campaigns/real-3b-sampled.yaml --db artifacts/loki_real_3b_sampled.db
+#
+# Why 3B and not 7B: Qwen2.5-7B at fp16 is ~15GB, which does not fit alongside
+# the judge classifier on a 24GB machine — it drove the box into ~6GB of swap and
+# generation slowed from ~8s to minutes. 3B (~6GB) fits in RAM, still follows the
+# tool-call convention, and is genuinely safety-tuned. Documented in the report.
+#
+# max_tokens is capped because DoS-family prompts otherwise generate to the cap on
+# every probe; max_steps=2 still covers the full fetch->act indirect-injection chain.
+name: real-hf-3b-sampled
+seed: 42
+generations: 2
+population_size: 8
+concurrency: 1
+matrix_trials: 2
+reproduction_trials: 10
+budget:
+  max_calls: 220
+  max_wall_clock_s: 9000
+techniques: []
+owasp_scope: []
+targets:
+  - {name: chat-tier0, kind: chat, tier: tier-0, backend: hf, model: Qwen/Qwen2.5-3B-Instruct, extra: {max_tokens: 96, temperature: 0.7, top_p: 0.95}}
+  - {name: chat-tier1, kind: chat, tier: tier-1, backend: hf, model: Qwen/Qwen2.5-3B-Instruct, extra: {max_tokens: 96, temperature: 0.7, top_p: 0.95}}
+  - {name: chat-tier2, kind: chat, tier: tier-2, backend: hf, model: Qwen/Qwen2.5-3B-Instruct, extra: {max_tokens: 96, temperature: 0.7, top_p: 0.95}}
+  - {name: agent-target, kind: agent, backend: hf, model: Qwen/Qwen2.5-3B-Instruct, extra: {max_tokens: 80, max_steps: 2, temperature: 0.7, top_p: 0.95}}
+  - {name: rag-target, kind: rag, backend: hf, model: Qwen/Qwen2.5-3B-Instruct, extra: {max_tokens: 96, temperature: 0.7, top_p: 0.95}}
